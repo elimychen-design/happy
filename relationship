@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Debugger v1.1 - 人際互動除錯器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Fira Code', 'Courier New', monospace; }
+        .terminal-card { border: 1px solid #334155; background-color: #1e293b; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .code-syntax { color: #f472b6; } /* keyword */
+        .code-string { color: #fbbf24; } /* string */
+        .code-comment { color: #64748b; font-style: italic; }
+        .btn-action { transition: all 0.2s; border: 1px solid transparent; }
+        .btn-action:active { transform: translateY(2px); }
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
+        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- 系統標題欄 -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 bg-slate-800 p-4 rounded-t-lg border-b-4 border-sky-500">
+            <div>
+                <h1 class="text-2xl font-bold text-sky-400">SOCIAL_DEBUGGER <span class="text-slate-500">v1.1</span></h1>
+                <p class="text-xs text-slate-400 font-mono mt-1">
+                    <span class="status-dot bg-emerald-500 pulse mr-1"></span> 核心編譯器：Ready | 模式：雙重殊異支持模式
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-2">
+                <div class="bg-slate-900 px-3 py-1 rounded text-xs border border-slate-700">
+                    <span class="text-sky-500">USER:</span> 小哲_架構師
+                </div>
+                <div class="bg-slate-900 px-3 py-1 rounded text-xs border border-slate-700">
+                    <span class="text-pink-500">TARGET:</span> 社會技巧_合作
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左側：社交邏輯掃描區 -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="terminal-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Scanner: 社交輸入監聽器</h2>
+                        <span class="text-xs font-mono text-slate-500">Module: Input_Listener.py</span>
+                    </div>
+                    
+                    <div class="bg-black p-4 rounded-md font-mono text-sm mb-6 border border-slate-800">
+                        <div class="flex space-x-2 mb-2">
+                            <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        </div>
+                        <p class="code-comment"># 正在偵測環境中的社交事件...</p>
+                        <p class="mt-2 text-sky-300" id="scenario-text">載入中...</p>
+                    </div>
+
+                    <div id="options-container" class="space-y-3">
+                        <!-- 動態產生 -->
+                    </div>
+
+                    <div id="feedback-panel" class="mt-6 hidden p-4 rounded border-l-4 font-mono text-sm">
+                        <!-- 回饋內容 -->
+                    </div>
+                </div>
+
+                <!-- 語句優化模組 -->
+                <div class="terminal-card p-6">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Optimizer: 輸出語句優化器</h2>
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                            <label class="block text-xs text-sky-500 font-mono mb-2">>>> 請輸入原始批評語法 (String Raw_Input):</label>
+                            <input type="text" id="raw-input" class="w-full bg-transparent border-b border-sky-900 focus:border-sky-400 text-white p-1 outline-none transition-colors" placeholder="輸入你想直接說的話...">
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <button onclick="optimizeAction()" id="opt-btn" class="bg-sky-600 hover:bg-sky-500 text-white px-8 py-3 rounded font-bold shadow-lg shadow-sky-900/20 active:translate-y-1 transition-all">
+                                執行優化編譯 (COMPILE)
+                            </button>
+                            <div id="buffer-display" class="hidden flex items-center space-x-3 bg-amber-900/20 px-4 py-2 rounded border border-amber-700/50">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500"></div>
+                                <span class="text-amber-500 text-xs font-mono">衝動緩衝器啟動中... <span id="timer">3</span>s</span>
+                            </div>
+                        </div>
+
+                        <div id="output-result" class="hidden mt-4 animate-fadeIn">
+                            <div class="bg-emerald-900/20 border border-emerald-500/50 p-4 rounded text-emerald-300 font-mono text-sm">
+                                <p class="text-[10px] text-emerald-500 mb-2 uppercase tracking-widest">優化輸出成功 (Optimized Output):</p>
+                                <p id="result-text" class="text-lg"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：日誌與狀態 -->
+            <div class="space-y-6">
+                <div class="terminal-card p-4">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase mb-3">合作進度條 (System Progress)</h2>
+                    <div class="w-full bg-slate-900 rounded-full h-2 mb-4">
+                        <div id="progress-bar" class="bg-sky-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <p class="text-slate-500 uppercase">成功次數</p>
+                            <p id="stat-success" class="text-emerald-400 text-lg">0</p>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <p class="text-slate-500 uppercase">錯誤修正</p>
+                            <p id="stat-error" class="text-rose-400 text-lg">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="terminal-card p-4 h-64 overflow-y-auto">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase mb-2">系統日誌 (System Logs)</h2>
+                    <div id="logs" class="space-y-1 text-[10px] font-mono text-slate-400">
+                        <p class="text-emerald-500">[INIT] 社交技巧訓練模組已加載。</p>
+                        <p>[INFO] 等待用戶輸入...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-slate-600 font-mono text-xs">
+            <p>DESIGNED FOR NEURODIVERSITY | TWELVE-YEAR CURRICULUM COMPLIANT</p>
+        </footer>
+    </div>
+
+    <script>
+        const scenarioDB = [
+            {
+                title: "科展分工錯誤",
+                desc: "組員在製作投影片時，把『光合作用』的公式寫錯了。這在你的眼中是一個非常嚴重的 Bug。",
+                options: [
+                    { 
+                        code: "IF error_detected() THEN shout('你寫錯了!')", 
+                        text: "直接指著螢幕大聲說：『你寫錯了，這公式完全不能用！』", 
+                        isCorrect: false, 
+                        log: "偵測到：直白批評。副作用：組員感到挫折，合作意願降低。"
+                    },
+                    { 
+                        code: "IF error_detected() THEN suggest_debug()", 
+                        text: "先指著公式說：『這部分的邏輯好像有點奇怪，我們要不要對一下課本？』", 
+                        isCorrect: true, 
+                        log: "偵測到：委婉修正。效果：成功除錯且維持了團隊關係。"
+                    }
+                ]
+            },
+            {
+                title: "感官過載與干擾",
+                desc: "小組討論太熱烈，環境音量超過你的承載範圍，你快要當機了。這時組員還一直問你問題。",
+                options: [
+                    { 
+                        code: "IF noise > threshold THEN shutdown()", 
+                        text: "直接推開桌子大喊：『吵死了！通通閉嘴！』然後衝出去。", 
+                        isCorrect: false, 
+                        log: "偵測到：焦慮爆發。副作用：產生衝突，後續修復成本極高。"
+                    },
+                    { 
+                        code: "IF noise > threshold THEN request_buffer()", 
+                        text: "戴上降噪耳機，舉手示意：『現在太吵了，我需要安靜 5 分鐘再回來。』", 
+                        isCorrect: true, 
+                        log: "偵測到：自我調節。效果：有效控制感官壓力，保留後續合作可能。"
+                    }
+                ]
+            }
+        ];
+
+        let currentIdx = 0;
+        let stats = { success: 0, error: 0 };
+
+        function addLog(msg, color = '') {
+            const logs = document.getElementById('logs');
+            const p = document.createElement('p');
+            p.className = color;
+            p.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logs.prepend(p);
+        }
+
+        function renderScenario() {
+            const s = scenarioDB[currentIdx];
+            document.getElementById('scenario-text').innerText = s.desc;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            document.getElementById('feedback-panel').classList.add('hidden');
+
+            s.options.forEach((opt, i) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 p-4 rounded border border-slate-700 hover:border-sky-500 cursor-pointer transition-all group";
+                div.onclick = () => handleChoice(opt);
+                div.innerHTML = `
+                    <div class="text-[10px] font-mono text-pink-400 mb-1 opacity-60 group-hover:opacity-100 transition-opacity">${opt.code}</div>
+                    <div class="text-sm">${opt.text}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function handleChoice(opt) {
+            const fb = document.getElementById('feedback-panel');
+            fb.classList.remove('hidden');
+            fb.innerText = opt.log;
+            
+            if(opt.isCorrect) {
+                fb.className = "mt-6 p-4 rounded border-l-4 font-mono text-sm bg-emerald-900/20 border-emerald-500 text-emerald-300";
+                stats.success++;
+                addLog(`[SUCCESS] ${opt.title} 任務成功完成。`, 'text-emerald-500');
+                updateUI();
+                setTimeout(() => {
+                    currentIdx = (currentIdx + 1) % scenarioDB.length;
+                    renderScenario();
+                }, 2500);
+            } else {
+                fb.className = "mt-6 p-4 rounded border-l-4 font-mono text-sm bg-rose-900/20 border-rose-500 text-rose-300";
+                stats.error++;
+                addLog(`[ERROR] ${opt.title} 邏輯發生衝突，建議重啟模組。`, 'text-rose-500');
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('stat-success').innerText = stats.success;
+            document.getElementById('stat-error').innerText = stats.error;
+            const total = stats.success + stats.error;
+            const percent = total > 0 ? (stats.success / total) * 100 : 0;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        function optimizeAction() {
+            const input = document.getElementById('raw-input').value;
+            if(!input) return;
+
+            const btn = document.getElementById('opt-btn');
+            const buffer = document.getElementById('buffer-display');
+            const timer = document.getElementById('timer');
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            buffer.classList.remove('hidden');
+            addLog("緩衝控制啟動，正在抑制衝動輸出...");
+
+            let count = 3;
+            timer.innerText = count;
+            const itv = setInterval(() => {
+                count--;
+                timer.innerText = count;
+                if(count <= 0) {
+                    clearInterval(itv);
+                    showOptimized(input);
+                }
+            }, 1000);
+        }
+
+        function showOptimized(input) {
+            const resultDiv = document.getElementById('output-result');
+            const resultText = document.getElementById('result-text');
+            const btn = document.getElementById('opt-btn');
+            const buffer = document.getElementById('buffer-display');
+
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            buffer.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+
+            let optimized = "我觀察到這裡可以更好，要不要一起優化它？";
+            if(input.includes("錯")) optimized = "這部分與我剛才理解的有些不同，我們要不要再對一次邏輯？";
+            if(input.includes("不爽") || input.includes("氣")) optimized = "我現在情緒負載有點高，先讓我安靜一下我們再討論。";
+            if(input.includes("爛")) optimized = "我想挑戰看看能不能把這個部分做得比現在更厲害！";
+
+            resultText.innerText = optimized;
+            addLog(`優化完成：${input} -> ${optimized}`, 'text-sky-400');
+        }
+
+        window.onload = renderScenario;
+    </script>
+</body>
+</html>
